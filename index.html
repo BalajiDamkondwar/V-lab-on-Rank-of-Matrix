@@ -1,500 +1,1011 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PCCoE Virtual Lab: Matrix Rank</title>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        :root {
-            --pccoe-blue: #004a99;
-            --pccoe-light-blue: #e6f0ff;
-            --accent-green: #28a745;
-            --accent-red: #dc3545;
-            --text-dark: #333;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCCOE Virtual Lab | Matrix Rank Solver + Quiz</title>
+  <!-- FontAwesome 6 (free CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js CDN for accuracy graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
 
-        * { box-sizing: border-box; scroll-behavior: smooth; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; padding-top: 120px; color: var(--text-dark); line-height: 1.6; background-color: #f8f9fa; }
+    body {
+      background: #f0f2f5;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        /* Header & Branding */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .top-bar {
-            background: var(--pccoe-blue);
-            color: white;
-            padding: 10px 5%;
-            display: flex;
-            align-items: center;
-        }
-        .logo-container img { height: 60px;width: 60px; margin-right: 15px; border-radius: 50%;object-fit: cover;border: 1px solid;}
-        .title-text h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
-        .title-text p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+    .dashboard {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
 
-        nav {
-            background: #003366;
-            padding: 0 5%;
-        }
-        nav ul {
-            list-style: none;
-            display: flex;
-            margin: 0;
-            padding: 0;
-            overflow-x: auto;
-        }
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            padding: 15px 20px;
-            display: block;
-            font-weight: 500;
-            transition: background 0.3s;
-            white-space: nowrap;
-        }
-        nav ul li a:hover { background: var(--pccoe-blue); }
+    /* SIDENAV */
+    .sidenav {
+      width: 280px;
+      background: #003366;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+      z-index: 10;
+    }
 
-        /* Layout */
-        section { padding: 60px 10%; min-height: 80vh; }
-        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        h2 { color: var(--pccoe-blue); border-bottom: 3px solid var(--pccoe-blue); display: inline-block; margin-bottom: 25px; }
+    .logo-area {
+      padding: 24px 20px 16px 24px;
+      border-bottom: 1px solid rgba(255,215,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
 
-        /* Calculator Styles */
-        .matrix-input-grid { display: inline-grid; gap: 10px; margin: 20px 0; background: #eee; padding: 15px; border-radius: 8px; }
-        .matrix-cell { width: 60px; height: 40px; text-align: center; font-size: 1.1rem; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { 
-            padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; 
-            transition: transform 0.2s, background 0.3s; margin-right: 10px; margin-top: 10px;
-        }
-        .btn-primary { background: var(--pccoe-blue); color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .college-logo {
+      width: 52px;
+      height: 52px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
 
-        /* Step-by-Step Display */
-        #steps-container { margin-top: 30px; border-left: 4px solid var(--pccoe-blue); padding-left: 20px; }
-        .step-box { 
-            background: white; border: 1px solid #ddd; margin-bottom: 20px; 
-            padding: 20px; border-radius: 8px; animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        .step-op { color: var(--pccoe-blue); font-weight: bold; margin-bottom: 10px; }
-        
-        .matrix-table { border-collapse: collapse; margin: 10px 0; font-family: monospace; }
-        .matrix-table td { 
-            width: 50px; height: 40px; text-align: center; border: 1px solid #eee; 
-            padding: 5px; font-weight: bold;
-        }
-        .pivot { background-color: #d4edda; border: 2px solid var(--accent-green) !important; }
-        .eliminated { color: var(--accent-red); }
+    .college-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-        /* Quiz Styles */
-        .quiz-option { 
-            display: block; padding: 12px; margin: 8px 0; border: 1px solid #ddd; 
-            border-radius: 5px; cursor: pointer; transition: 0.2s;
-        }
-        .quiz-option:hover { background: var(--pccoe-light-blue); }
-        #timer { font-size: 1.5rem; font-weight: bold; color: var(--accent-red); float: right; }
-        .progress-bar { height: 10px; background: #eee; border-radius: 5px; margin: 20px 0; }
-        .progress-fill { height: 100%; background: var(--pccoe-blue); width: 0%; border-radius: 5px; transition: 0.3s; }
+    .logo-text h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
 
-        /* Graphics Demo */
-        #canvas-container { text-align: center; background: #333; padding: 20px; border-radius: 10px; color: white; }
-        canvas { background: white; border-radius: 4px; }
+    .logo-text p {
+      font-size: 0.7rem;
+      color: #FFC107;
+    }
 
-        footer { background: #222; color: white; padding: 40px 5%; text-align: center; margin-top: 50px; }
+    .nav-items {
+      flex: 1;
+      padding: 20px 16px;
+    }
 
-        @media print {
-            header, nav, .btn, #quiz, #apps { display: none; }
-            body { padding: 0; }
-            .step-box { page-break-inside: avoid; border: 1px solid #000; }
-        }
-    </style>
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #e0e7ff;
+      text-align: left;
+      padding: 12px 18px;
+      margin: 6px 0;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .nav-btn i {
+      width: 24px;
+    }
+
+    .nav-btn.active {
+      background: #FFB347;
+      color: #003366;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .nav-btn:hover:not(.active) {
+      background: rgba(255,180,70,0.2);
+      color: white;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 36px;
+      background: #f8fafc;
+    }
+
+    .page-header {
+      margin-bottom: 28px;
+      border-left: 6px solid #FFB347;
+      padding-left: 20px;
+    }
+
+    .page-header h1 {
+      font-size: 1.8rem;
+      color: #003366;
+    }
+
+    .section-card {
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+      padding: 28px 32px;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #003366;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #FFB347;
+      display: inline-block;
+      padding-bottom: 6px;
+    }
+
+    /* Matrix controls */
+    .matrix-dim-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 20px;
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 24px;
+      margin-bottom: 28px;
+    }
+
+    .dim-control {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dim-control label {
+      font-weight: 600;
+      color: #003366;
+    }
+
+    .dim-control input {
+      width: 90px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 18px;
+      text-align: center;
+    }
+
+    button {
+      background: #003366;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button.calc-btn {
+      background: #FF8C42;
+      color: #003366;
+    }
+
+    .matrix-table {
+      border-collapse: collapse;
+      background: white;
+      margin: 10px 0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .matrix-table td, .matrix-table th {
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .matrix-table td input {
+      width: 70px;
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+    }
+
+    .steps-container {
+      max-height: 480px;
+      overflow-y: auto;
+      background: #fefcf5;
+      padding: 12px;
+      border-radius: 24px;
+      margin-top: 18px;
+    }
+
+    .step-item {
+      background: white;
+      border-left: 6px solid #FFB347;
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .step-op {
+      font-weight: 700;
+      color: #003366;
+      background: #eef2ff;
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+    }
+
+    .small-matrix {
+      border-collapse: collapse;
+    }
+
+    .small-matrix td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    .rank-badge {
+      background: #003366;
+      color: #FFC107;
+      display: inline-block;
+      padding: 10px 26px;
+      border-radius: 40px;
+      font-weight: 800;
+      margin-top: 20px;
+    }
+
+    .app-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .app-card {
+      background: linear-gradient(135deg, #fef9e6, #ffffff);
+      border-radius: 24px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid #ffe0a3;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .app-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 24px rgba(0,51,102,0.15);
+      border-color: #FFB347;
+    }
+
+    .back-btn {
+      background: #e9ecef;
+      color: #003366;
+      margin-bottom: 20px;
+    }
+
+    /* Quiz Styles */
+    .quiz-container {
+      background: #ffffff;
+      border-radius: 28px;
+    }
+
+    .quiz-question {
+      background: #f9fafc;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 18px;
+      border: 1px solid #e9edf2;
+    }
+
+    .quiz-question p {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #003366;
+    }
+
+    .quiz-options label {
+      display: block;
+      margin: 8px 0;
+      background: #f1f5f9;
+      padding: 10px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .quiz-options input {
+      margin-right: 12px;
+    }
+
+    .quiz-stats {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 24px 0 20px;
+      padding: 20px;
+      background: #eef2ff;
+      border-radius: 28px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 24px;
+      padding: 12px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    canvas#accuracyChart, canvas#preTestChart {
+      max-height: 200px;
+      max-width: 300px;
+    }
+
+    .quiz-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .feedback-correct {
+      color: #2b7e3a;
+      font-weight: 600;
+      margin-left: 16px;
+    }
+
+    .feedback-wrong {
+      color: #c7254e;
+      font-weight: 600;
+    }
+    
+    /* Feedback form */
+    .feedback-form-container {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #003366;
+      margin-bottom: 8px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 20px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.95rem;
+    }
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #ffb347;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: #ccc;
+      transition: 0.1s;
+      padding: 0;
+    }
+    .star-btn.active-star {
+      color: #FFB347;
+    }
+    .feedback-message {
+      margin-top: 12px;
+      font-weight: 500;
+    }
+    .footer-credit {
+      margin-top: 40px;
+      text-align: center;
+      padding: 20px;
+      border-top: 2px solid #e2e8f0;
+      color: #2c3e66;
+      font-weight: 500;
+      background: #ffffffcc;
+      border-radius: 40px;
+      font-size: 1rem;
+    }
+    .rank-prediction-panel {
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 24px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .prediction-feedback {
+      margin-top: 12px;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 28px;
+    }
+    .tutorial-step {
+      background: #f8f9fc;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border-left: 8px solid #FFB347;
+    }
+    .demo-matrix {
+      background: #fff;
+      padding: 16px;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .highlight {
+      background: #fff3e0;
+      padding: 12px 20px;
+      border-radius: 32px;
+      font-weight: 600;
+      color: #cc7700;
+    }
+    @media (max-width: 780px) {
+      .sidenav { width: 80px; }
+      .logo-text { display: none; }
+      .nav-btn span:not(i) { display: none; }
+      .nav-btn { justify-content: center; }
+    }
+  </style>
 </head>
 <body>
+<div class="dashboard">
+  <div class="sidenav">
+    <div class="logo-area">
+      <div class="college-logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/0/00/PCCOE-Logo-24.png" alt="PCCOE Logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/52?text=PCCOE';">
+      </div>
+      <div class="logo-text">
+        <h1>Pimpri Chinchwad College of Engineering (PCCOE)</h1>
+        <p>Department of Applied Science & Humanity | Engineering Mathematics Portal</p>
+      </div>
+    </div>
+    <div class="nav-items">
+      <button class="nav-btn active" data-section="aim"><i class="fas fa-bullseye"></i> <span>Aim</span></button>
+      <button class="nav-btn" data-section="tutorial"><i class="fas fa-chalkboard-teacher"></i> <span>Tutorial</span></button>
+      <button class="nav-btn" data-section="pre-test"><i class="fas fa-file-alt"></i> <span>Pre-Test (Basics)</span></button>
+      <button class="nav-btn" data-section="virtual-lab"><i class="fas fa-calculator"></i> <span>Virtual Lab</span></button>
+      <button class="nav-btn" data-section="applications"><i class="fas fa-chalkboard-user"></i> <span>Applications</span></button>
+      <button class="nav-btn" data-section="quiz"><i class="fas fa-question-circle"></i> <span>MCQ Quiz</span></button>
+      <button class="nav-btn" data-section="feedback"><i class="fas fa-comment-dots"></i> <span>Feedback</span></button>
+      <button class="nav-btn" data-section="credits"><i class="fas fa-trophy"></i> <span>Credits</span></button>
+    </div>
+    <div style="padding: 24px 20px 30px; font-size: 0.7rem; opacity: 0.7;">
+      <i class="fas fa-flask"></i> Dept. of ASH
+    </div>
+  </div>
 
-    <header>
-        <div class="top-bar">
-            <div class="logo-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/0/00/PCCOE-Logo-24.png" alt="PCCoE Logo">
-            </div>
-            <div class="title-text">
-                <h1>Pimpri Chinchwad College of Engineering, Pune</h1>
-                <p>Department of Applied Sciences and Humanities</p>
-            </div>
-        </div>
-        <nav>
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#intro">What is Matrix?</a></li>
-                <li><a href="#tutorial">Rank Tutorial</a></li>
-                <li><a href="#apps">Applications</a></li>
-                <li><a href="#quiz">Quiz</a></li>
-            </ul>
-        </nav>
-    </header>
+  <div class="main-content" id="mainContent"></div>
+</div>
 
-    <section id="home" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url('https://www.transparenttextures.com/patterns/cubes.png');">
-        <h1 style="font-size: 3rem; color: var(--pccoe-blue);">Interactive Matrix Rank Virtual Lab</h1>
-        <p style="font-size: 1.2rem; max-width: 700px;">Master the concepts of Linear Algebra through our step-by-step Gaussian Elimination simulator and interactive learning modules.</p>
-        <div style="margin-top: 20px;">
-            <button class="btn btn-primary" onclick="document.getElementById('tutorial').scrollIntoView()">Start Rank Tutorial</button>
-            <button class="btn btn-secondary" onclick="document.getElementById('quiz').scrollIntoView()">Take Quiz</button>
-        </div>
-    </section>
+<script>
+  // ---------- APP STATE ----------
+  let currentSection = 'aim';
+  let currentSubview = null;
+  let selectedApp = null;
+  let matrixRows = 3, matrixCols = 3;
+  let showStepsHint = false;
+  let lastComputedSteps = null;
+  let lastRank = null;
+  
+  // Main Quiz State
+  let quizAnswers = {};          
+  let quizSubmitted = false;
+  let quizStarted = false;
+  let quizStartTime = null;
+  let quizEndTime = null;
+  let quizScore = 0;
+  let accuracyChart = null;
+  let quizTimerInterval = null;
 
-    <section id="intro">
-        <div class="card">
-            <h2>Understanding Matrices</h2>
-            <p>A <strong>matrix</strong> is a rectangular array of numbers, symbols, or expressions, arranged in rows and columns.</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                <div>
-                    <h3>Common Types</h3>
-                    <ul>
-                        <li><strong>Square Matrix:</strong> Rows = Columns</li>
-                        <li><strong>Identity Matrix (\(I\)):</strong> 1s on diagonal, 0s elsewhere</li>
-                        <li><strong>Zero Matrix:</strong> All elements are 0</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3>Mathematical Notation</h3>
-                    <p>A matrix \(A\) is represented as:</p>
-                    <p>$$ A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix} $$</p>
-                </div>
-            </div>
-        </div>
-    </section>
+  // Pre-Test State
+  let preTestAnswers = {};
+  let preTestSubmitted = false;
+  let preTestScore = 0;
+  let preTestChart = null;
 
-    <section id="tutorial">
-        <div class="card">
-            <h2>Matrix Rank Calculator</h2>
-            <p>The <strong>Rank</strong> of a matrix is the number of linearly independent rows. We find it by reducing the matrix to <strong>Row Echelon Form</strong>.</p>
-            
-            <div style="margin-bottom: 20px;">
-                <label>Matrix Size: </label>
-                <select id="matrix-size" onchange="createMatrixInput()">
-                    <option value="2">2 x 2</option>
-                    <option value="3" selected>3 x 3</option>
-                    <option value="4">4 x 4</option>
-                </select>
-                <button class="btn btn-secondary" onclick="loadExample(1)">Load Rank 2 Example</button>
-                <button class="btn btn-secondary" onclick="loadExample(2)">Load Full Rank Example</button>
-            </div>
+  const mainContainer = document.getElementById('mainContent');
 
-            <div id="matrix-input-container"></div>
-            
-            <div style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="calculateRank()">CALCULATE RANK</button>
-                <button class="btn btn-secondary" onclick="createMatrixInput()">RESET</button>
-                <button class="btn btn-secondary" onclick="window.print()">DOWNLOAD PDF</button>
-            </div>
+  // ---------- MATRIX UTILITIES ----------
+  function copyMatrix(mat) {
+    return mat.map(row => [...row]);
+  }
 
-            <div id="steps-container">
-                </div>
-
-            <div id="final-result" style="margin-top: 30px; display: none;">
-                <div style="background: var(--pccoe-light-blue); padding: 20px; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0; color: var(--pccoe-blue);">FINAL RANK: <span id="rank-value" style="font-size: 2.5rem;">0</span></h3>
-                    <p>Number of non-zero rows in Row Echelon Form.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="apps" style="background: #f0f4f8;">
-        <h2>Engineering Applications</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-            <div class="card">
-                <h4>⚡ Electrical Engineering</h4>
-                <p>Using Kirchhoff's laws to solve circuit networks via system of linear equations.</p>
-            </div>
-            <div class="card">
-                <h4>🏗️ Structural Analysis</h4>
-                <p>Determining stability of trusses and bridges using stiffness matrices.</p>
-            </div>
-            <div class="card">
-                <h4>🎮 Computer Graphics</h4>
-                <p>Rotating, scaling, and translating 3D objects in games using 4x4 matrices.</p>
-            </div>
-        </div>
-
-        <div class="card" id="canvas-container">
-            <h3>Interactive Demo: 2D Rotation</h3>
-            <p>Rotating a vector (x,y) using Matrix multiplication</p>
-            <canvas id="rotationCanvas" width="400" height="300"></canvas>
-            <div>
-                <input type="range" id="angleSlider" min="0" max="360" value="0">
-                <p>Angle: <span id="angleText">0</span>°</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="quiz">
-        <div class="card">
-            <div id="timer">10:00</div>
-            <h2>Knowledge Check</h2>
-            <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
-            
-            <div id="quiz-content">
-                </div>
-            <button id="next-btn" class="btn btn-primary" onclick="handleNextQuestion()">Next Question</button>
-        </div>
-    </section>
-
-    <footer>
-        <div class="guidance-section">
-           <h2>GUIDANCE BY: Dr. Neha Sharma</h2>
-        </div>
-
-        <h1>🚀 CONTRIBUTORS 🚀</h1>
-
-        <div class="contributors-wrapper">
-            <div class="contributor-card">
-                <img src="paresh-photo.jpg" alt="Paresh Thorat" class="round-photo">
-                <h3>1. Paresh Thorat 125B1F005</h3>
-            </div>
-
-            <div class="contributor-card">
-                <img src="balaji-photo.jpg" alt="Balaji Damkondwar" class="round-photo">
-                <h3>2. Balaji Damkondwar 125B1F041</h3>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>© 2025 Pimpri Chinchwad College of Engineering, Pune</p>
-            <p>Department of Applied Science and Humanities | Virtual Lab Project</p>
-        </div>
-    </footer>
-    <script>
-        // --- Matrix Core Logic ---
-        function createMatrixInput() {
-            const size = parseInt(document.getElementById('matrix-size').value);
-            const container = document.getElementById('matrix-input-container');
-            container.innerHTML = '';
-            const grid = document.createElement('div');
-            grid.className = 'matrix-input-grid';
-            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-            
-            for(let i=0; i<size*size; i++) {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.className = 'matrix-cell';
-                input.value = Math.floor(Math.random() * 5);
-                grid.appendChild(input);
+  function gaussianEliminationWithSteps(originalMat) {
+    let M = copyMatrix(originalMat);
+    const rows = M.length, cols = M[0].length;
+    let steps = [];
+    steps.push({ operation: "Initial Matrix (Original)", matrix: copyMatrix(M) });
+    
+    let row = 0, col = 0;
+    while (row < rows && col < cols) {
+      let pivotRow = -1;
+      for (let i = row; i < rows; i++) {
+        if (Math.abs(M[i][col]) > 1e-10) { pivotRow = i; break; }
+      }
+      if (pivotRow === -1) { col++; continue; }
+      if (pivotRow !== row) {
+        [M[row], M[pivotRow]] = [M[pivotRow], M[row]];
+        steps.push({ operation: `Swap R${row+1} ↔ R${pivotRow+1}`, matrix: copyMatrix(M) });
+      }
+      let pivotVal = M[row][col];
+      if (Math.abs(pivotVal) > 1e-12) {
+        for (let i = row + 1; i < rows; i++) {
+          const factor = M[i][col] / pivotVal;
+          if (Math.abs(factor) > 1e-12) {
+            let opDesc = `R${i+1} → R${i+1} - (${factor.toFixed(4)}) R${row+1}`;
+            for (let k = col; k < cols; k++) {
+              M[i][k] = M[i][k] - factor * M[row][k];
+              if (Math.abs(M[i][k]) < 1e-10) M[i][k] = 0;
             }
-            container.appendChild(grid);
-            document.getElementById('steps-container').innerHTML = '';
-            document.getElementById('final-result').style.display = 'none';
+            steps.push({ operation: opDesc, matrix: copyMatrix(M) });
+          }
         }
+      }
+      row++; col++;
+    }
+    let rank = 0;
+    for (let i = 0; i < rows; i++) {
+      let nonZero = false;
+      for (let j = 0; j < cols; j++) {
+        if (Math.abs(M[i][j]) > 1e-9) { nonZero = true; break; }
+      }
+      if (nonZero) rank++;
+    }
+    return { finalMatrix: M, rank: rank, steps: steps };
+  }
 
-        function getMatrixData() {
-            const size = parseInt(document.getElementById('matrix-size').value);
-            const inputs = document.querySelectorAll('.matrix-cell');
-            let matrix = [];
-            for(let i=0; i<size; i++) {
-                let row = [];
-                for(let j=0; j<size; j++) {
-                    row.push(parseFloat(inputs[i*size + j].value) || 0);
-                }
-                matrix.push(row);
-            }
-            return matrix;
+  function generateMatrixInputGrid(rows, cols) {
+    let html = `<div class="matrix-grid"><table class="matrix-table" id="dynamicMatrixTable">`;
+    for (let i = 0; i < rows; i++) {
+      html += `<tr>`;
+      for (let j = 0; j < cols; j++) {
+        html += `<td><input type="number" step="any" value="0" id="cell_${i}_${j}" style="width:70px;"></td>`;
+      }
+      html += `</tr>`;
+    }
+    html += `<\/table></div>`;
+    return html;
+  }
+
+  function readMatrixFromUI(rows, cols) {
+    let mat = [];
+    for (let i = 0; i < rows; i++) {
+      let row = [];
+      for (let j = 0; j < cols; j++) {
+        let el = document.getElementById(`cell_${i}_${j}`);
+        let val = el ? parseFloat(el.value) : 0;
+        if (isNaN(val)) val = 0;
+        row.push(val);
+      }
+      mat.push(row);
+    }
+    return mat;
+  }
+
+  function renderSolutionSteps(steps, rank) {
+    if (!steps || steps.length === 0) return `<p>No steps available.</p>`;
+    let stepsHtml = `<h4 style="margin-bottom: 12px;"><i class="fas fa-list-ol"></i> Intermediate Row Echelon Steps</h4>`;
+    for (let idx = 0; idx < steps.length; idx++) {
+      const step = steps[idx];
+      const matrix = step.matrix;
+      stepsHtml += `<div class="step-item"><div class="step-op"><i class="fas fa-arrows-spin"></i> ${step.operation}</div><div class="step-matrix"><table class="small-matrix">`;
+      for (let r = 0; r < matrix.length; r++) {
+        stepsHtml += `<tr>`;
+        for (let c = 0; c < matrix[0].length; c++) {
+          let val = matrix[r][c];
+          let displayVal = Number.isInteger(val) ? val : val.toFixed(4);
+          stepsHtml += `<td style="padding:8px 12px; border:1px solid #ccc;">${displayVal}</td>`;
         }
+        stepsHtml += `</tr>`;
+      }
+      stepsHtml += `<\/table></div></div>`;
+    }
+    stepsHtml += `<div class="rank-badge"><i class="fas fa-trophy"></i> Rank of Matrix = ${rank}</div>`;
+    return stepsHtml;
+  }
 
-        function renderMatrix(matrix, pivotRow = -1, pivotCol = -1) {
-            let html = '<table class="matrix-table">';
-            for(let i=0; i<matrix.length; i++) {
-                html += '<tr>';
-                for(let j=0; j<matrix[i].length; j++) {
-                    let val = Number.isInteger(matrix[i][j]) ? matrix[i][j] : matrix[i][j].toFixed(2);
-                    let cls = (i === pivotRow && j === pivotCol) ? 'pivot' : '';
-                    if (j < pivotCol && val == 0) cls += ' eliminated';
-                    html += `<td class="${cls}">${val}</td>`;
-                }
-                html += '</tr>';
-            }
-            html += '</table>';
-            return html;
+  // ------------- PRE-TEST QUESTIONS (11th/12th Basic Matrix Concepts) -------------
+  const preTestQuestions = [
+    { text: "What is a matrix?", options: ["A set of numbers arranged in rows and columns", "A single number", "A type of equation", "A vector only"], correct: 0 },
+    { text: "What is the order of a matrix with 3 rows and 4 columns?", options: ["3×4", "4×3", "3×3", "4×4"], correct: 0 },
+    { text: "Which of the following is a square matrix?", options: ["2×3", "3×2", "3×3", "1×4"], correct: 2 },
+    { text: "What is a diagonal matrix?", options: ["All entries zero", "Only diagonal entries non-zero", "All entries equal", "Only upper triangular non-zero"], correct: 1 },
+    { text: "What is the transpose of a matrix?", options: ["Swap rows and columns", "Multiply by itself", "Add to identity", "Take determinant"], correct: 0 },
+    { text: "What is an identity matrix?", options: ["All entries 1", "Diagonal entries 1, rest 0", "All entries 0", "Diagonal entries 0, rest 1"], correct: 1 },
+    { text: "Matrix addition is possible when:", options: ["Both matrices have same order", "One is square", "One is rectangular", "Always possible"], correct: 0 },
+    { text: "What is a scalar multiplication?", options: ["Multiply each element by a number", "Multiply two matrices", "Add constant to diagonal", "Find determinant"], correct: 0 },
+    { text: "What is a null matrix?", options: ["All entries zero", "All entries one", "Matrix with rank 1", "Identity matrix"], correct: 0 },
+    { text: "What is the determinant of a 2×2 matrix [[a,b],[c,d]]?", options: ["ad+bc", "ad-bc", "ab-cd", "ac-bd"], correct: 1 }
+  ];
+
+  function renderPreTest() {
+    let questionsHtml = '';
+    preTestQuestions.forEach((q, idx) => {
+      const selectedVal = preTestAnswers[`pre_q${idx}`] !== undefined ? preTestAnswers[`pre_q${idx}`] : -1;
+      questionsHtml += `
+        <div class="quiz-question" data-qidx="${idx}">
+          <p>${idx+1}. ${q.text}</p>
+          <div class="quiz-options">
+            ${q.options.map((opt, optIdx) => `
+              <label style="${preTestSubmitted ? (optIdx === q.correct ? 'background:#d4edda; border-left:6px solid #28a745;' : (preTestAnswers[`pre_q${idx}`] === optIdx && preTestAnswers[`pre_q${idx}`] !== q.correct ? 'background:#f8d7da; border-left:6px solid #dc3545;' : '')) : ''}">
+                <input type="radio" name="pre_q${idx}" value="${optIdx}" ${preTestSubmitted ? 'disabled' : ''} ${(!preTestSubmitted && preTestAnswers[`pre_q${idx}`] === optIdx) ? 'checked' : ''}>
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+          ${preTestSubmitted ? `<div class="${preTestAnswers[`pre_q${idx}`] === q.correct ? 'feedback-correct' : 'feedback-wrong'}" style="margin-top:8px;"><i class="fas ${preTestAnswers[`pre_q${idx}`] === q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i> ${preTestAnswers[`pre_q${idx}`] === q.correct ? 'Correct!' : `Wrong. Correct: ${q.options[q.correct]}`}</div>` : ''}
+        </div>
+      `;
+    });
+    const scorePercent = preTestSubmitted ? ((preTestScore / preTestQuestions.length) * 100).toFixed(1) : '0';
+    return `
+      <div class="page-header">
+        <h1><i class="fas fa-file-alt"></i> Pre-Test: Basic Matrix Concepts</h1>
+        <div>Test your foundational knowledge (11th/12th standard level) before proceeding to the virtual lab.</div>
+      </div>
+      <div class="section-card quiz-container">
+        <div class="section-title"><i class="fas fa-graduation-cap"></i> Basic Matrix Assessment (10 Questions)</div>
+        <div class="quiz-stats">
+          <div class="stat-card"><i class="fas fa-chart-line"></i> ${preTestSubmitted ? `Score: ${preTestScore}/${preTestQuestions.length} (${scorePercent}%)` : "Answer all questions and submit"}</div>
+          <div style="flex:1; min-width:180px;"><canvas id="preTestChart" width="200" height="150" style="max-height:150px; width:100%;"></canvas></div>
+        </div>
+        <form id="preTestForm">
+          ${questionsHtml}
+        </form>
+        <div class="quiz-actions" style="justify-content: center; margin-top: 30px;">
+          ${!preTestSubmitted ? `<button type="button" id="submitPreTestBtn" class="calc-btn" style="padding:12px 32px;"><i class="fas fa-paper-plane"></i> Submit Pre-Test</button>` : `<button type="button" id="resetPreTestBtn"><i class="fas fa-undo-alt"></i> Retake Pre-Test</button>`}
+        </div>
+      </div>
+    `;
+  }
+
+  function computePreTestScore() {
+    let correctCount = 0;
+    for (let i = 0; i < preTestQuestions.length; i++) {
+      const userAns = preTestAnswers[`pre_q${i}`];
+      if (userAns !== undefined && userAns === preTestQuestions[i].correct) correctCount++;
+    }
+    preTestScore = correctCount;
+    preTestSubmitted = true;
+    renderCurrentSection();
+    attachPreTestEvents();
+    drawPreTestChart();
+  }
+
+  function drawPreTestChart() {
+    const canvas = document.getElementById('preTestChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const correctPercent = (preTestScore / preTestQuestions.length) * 100;
+    const wrongPercent = 100 - correctPercent;
+    if (preTestChart) preTestChart.destroy();
+    preTestChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: [`Correct (${preTestScore})`, `Incorrect (${preTestQuestions.length - preTestScore})`], datasets: [{ data: [correctPercent, wrongPercent], backgroundColor: ['#28a745', '#dc3545'], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  function attachPreTestEvents() {
+    if (!preTestSubmitted) {
+      const radios = document.querySelectorAll('#preTestForm input[type="radio"]');
+      radios.forEach(radio => {
+        radio.removeEventListener('change', handlePreTestChange);
+        radio.addEventListener('change', handlePreTestChange);
+      });
+      const submitBtn = document.getElementById('submitPreTestBtn');
+      if (submitBtn) submitBtn.addEventListener('click', () => {
+        for (let i = 0; i < preTestQuestions.length; i++) {
+          const selected = document.querySelector(`input[name="pre_q${i}"]:checked`);
+          if (selected) preTestAnswers[`pre_q${i}`] = parseInt(selected.value);
         }
+        computePreTestScore();
+      });
+    } else {
+      const resetBtn = document.getElementById('resetPreTestBtn');
+      if (resetBtn) resetBtn.addEventListener('click', () => {
+        preTestAnswers = {};
+        preTestSubmitted = false;
+        preTestScore = 0;
+        if (preTestChart) { preTestChart.destroy(); preTestChart = null; }
+        renderCurrentSection();
+        attachPreTestEvents();
+      });
+    }
+  }
 
-        function addStep(title, op, matrix, pRow, pCol) {
-            const container = document.getElementById('steps-container');
-            const step = document.createElement('div');
-            step.className = 'step-box';
-            step.innerHTML = `
-                <div class="step-op">${title}</div>
-                <p>${op}</p>
-                ${renderMatrix(matrix, pRow, pCol)}
-            `;
-            container.appendChild(step);
+  function handlePreTestChange(e) {
+    const name = e.target.name;
+    const value = parseInt(e.target.value);
+    preTestAnswers[name] = value;
+  }
+
+  // ------------- MAIN QUIZ -------------
+  const quizQuestions = [
+    { text: "What is the rank of a 3x3 identity matrix?", options: ["0", "1", "2", "3"], correct: 3 },
+    { text: "If the determinant of a square matrix is zero, the rank is:", options: ["Full rank", "Less than full rank", "Equal to number of rows", "Cannot be determined"], correct: 1 },
+    { text: "For a system Ax = b to have a unique solution, rank(A) must equal:", options: ["Number of unknowns", "Number of equations", "Rank of augmented matrix and number of unknowns", "Zero"], correct: 2 },
+    { text: "A matrix with all rows linearly independent has rank equal to:", options: ["Number of columns", "Number of zero rows", "Number of non-zero rows after echelon form", "Determinant value"], correct: 2 },
+    { text: "What is the maximum possible rank of a 4x6 matrix?", options: ["6", "4", "10", "24"], correct: 1 },
+    { text: "Which row operation does NOT change the rank of a matrix?", options: ["Swapping rows", "Multiplying a row by nonzero scalar", "Adding multiple of one row to another", "All of the above"], correct: 3 },
+    { text: "If rank(A) = 2 for a 3x3 matrix, then the nullity (dimension of null space) is:", options: ["0", "1", "2", "3"], correct: 1 },
+    { text: "For a non-zero matrix of size m×n, the rank is at most:", options: ["min(m,n)", "max(m,n)", "m+n", "m*n"], correct: 0 },
+    { text: "A matrix has full row rank if its rank equals:", options: ["Number of columns", "Number of rows", "Zero", "Determinant"], correct: 1 },
+    { text: "What is the rank of a zero matrix of size 5x5?", options: ["5", "1", "0", "Undefined"], correct: 2 },
+    { text: "After Gaussian elimination, if there are 2 non-zero rows in a 3x4 matrix, the rank is:", options: ["4", "3", "2", "1"], correct: 2 },
+    { text: "Rank of transpose of a matrix is:", options: ["Different from original", "Equal to original rank", "Always zero", "Equal to number of columns"], correct: 1 }
+  ];
+
+  function renderQuiz() {
+    let questionsHtml = '';
+    quizQuestions.forEach((q, idx) => {
+      questionsHtml += `
+        <div class="quiz-question" data-qidx="${idx}">
+          <p>${idx+1}. ${q.text}</p>
+          <div class="quiz-options">
+            ${q.options.map((opt, optIdx) => `
+              <label style="${quizSubmitted ? (optIdx === q.correct ? 'background:#d4edda; border-left:6px solid #28a745;' : (quizAnswers[`q${idx}`] === optIdx && quizAnswers[`q${idx}`] !== q.correct ? 'background:#f8d7da; border-left:6px solid #dc3545;' : '')) : ''}">
+                <input type="radio" name="q${idx}" value="${optIdx}" ${quizSubmitted ? 'disabled' : ''} ${(!quizSubmitted && quizAnswers[`q${idx}`] === optIdx) ? 'checked' : ''}>
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+          ${quizSubmitted ? `<div class="${quizAnswers[`q${idx}`] === q.correct ? 'feedback-correct' : 'feedback-wrong'}" style="margin-top:8px;"><i class="fas ${quizAnswers[`q${idx}`] === q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i> ${quizAnswers[`q${idx}`] === q.correct ? 'Correct!' : `Wrong. Correct: ${q.options[q.correct]}`}</div>` : ''}
+        </div>
+      `;
+    });
+    let timerDisplay = '0.0';
+    if (quizStarted && !quizSubmitted && quizStartTime) timerDisplay = ((Date.now() - quizStartTime) / 1000).toFixed(1);
+    else if (quizEndTime && quizStartTime) timerDisplay = ((quizEndTime - quizStartTime) / 1000).toFixed(1);
+    const scorePercent = quizSubmitted ? ((quizScore / quizQuestions.length) * 100).toFixed(1) : '0';
+    return `
+      <div class="page-header"><h1><i class="fas fa-question-circle"></i> Matrix Rank Mastery Quiz</h1><div>Test your understanding of rank & linear independence.</div></div>
+      <div class="section-card quiz-container">
+        <div class="section-title"><i class="fas fa-puzzle-piece"></i> MCQ Assessment (12 Questions)</div>
+        <div class="quiz-actions" style="justify-content: center; margin-bottom: 20px;">
+          ${!quizSubmitted && !quizStarted ? `<button id="startQuizBtn" class="calc-btn" style="font-size:1.1rem;"><i class="fas fa-play"></i> Start Quiz</button>` : ''}
+          ${!quizSubmitted && quizStarted ? `<span style="font-weight:600; background:#eef2ff; padding:8px 20px; border-radius:40px;"><i class="fas fa-hourglass-half"></i> Quiz in progress...</span>` : ''}
+          ${quizSubmitted ? `<button id="resetQuizBtn" class="calc-btn"><i class="fas fa-undo-alt"></i> Retake Quiz</button>` : ''}
+        </div>
+        <div class="quiz-stats">
+          <div class="stat-card"><i class="fas fa-clock"></i> Time: <strong id="quizTimerDisplay">${timerDisplay}</strong> sec</div>
+          ${quizSubmitted ? `<div class="stat-card"><i class="fas fa-chart-line"></i> Score: ${quizScore}/${quizQuestions.length} (${scorePercent}%)</div>` : `<div class="stat-card"><i class="fas fa-info-circle"></i> Click Start Quiz to begin</div>`}
+          <div style="flex:1;"><canvas id="accuracyChart" style="max-height:150px;"></canvas></div>
+        </div>
+        <form id="quizForm">${questionsHtml}</form>
+        <div class="quiz-actions" style="justify-content: center; margin-top: 30px;">
+          ${!quizSubmitted && quizStarted ? `<button id="submitQuizBtn" class="calc-btn"><i class="fas fa-paper-plane"></i> Submit Quiz</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function startQuizTimer() {
+    if (quizStarted || quizSubmitted) return;
+    quizStarted = true;
+    quizStartTime = Date.now();
+    if (quizTimerInterval) clearInterval(quizTimerInterval);
+    quizTimerInterval = setInterval(() => {
+      if (quizStarted && !quizSubmitted && document.getElementById('quizTimerDisplay')) {
+        document.getElementById('quizTimerDisplay').innerText = ((Date.now() - quizStartTime) / 1000).toFixed(1);
+      } else if (quizSubmitted) clearInterval(quizTimerInterval);
+    }, 200);
+  }
+
+  function computeScoreAndShow() {
+    let correctCount = 0;
+    for (let i = 0; i < quizQuestions.length; i++) {
+      if (quizAnswers[`q${i}`] === quizQuestions[i].correct) correctCount++;
+    }
+    quizScore = correctCount;
+    quizSubmitted = true;
+    quizEndTime = Date.now();
+    if (quizTimerInterval) clearInterval(quizTimerInterval);
+    renderCurrentSection();
+    attachQuizEvents();
+    drawAccuracyChart();
+  }
+
+  function drawAccuracyChart() {
+    const canvas = document.getElementById('accuracyChart');
+    if (!canvas) return;
+    const correctPercent = (quizScore / quizQuestions.length) * 100;
+    if (accuracyChart) accuracyChart.destroy();
+    accuracyChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: [`Correct (${quizScore})`, `Incorrect (${quizQuestions.length - quizScore})`], datasets: [{ data: [correctPercent, 100 - correctPercent], backgroundColor: ['#28a745', '#dc3545'] }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  function attachQuizEvents() {
+    if (!quizSubmitted && !quizStarted) {
+      const startBtn = document.getElementById('startQuizBtn');
+      if (startBtn) startBtn.addEventListener('click', () => { startQuizTimer(); renderCurrentSection(); attachQuizEvents(); });
+    }
+    if (!quizSubmitted && quizStarted) {
+      document.querySelectorAll('#quizForm input[type="radio"]').forEach(radio => {
+        radio.removeEventListener('change', handleQuizChange);
+        radio.addEventListener('change', handleQuizChange);
+      });
+      const submitBtn = document.getElementById('submitQuizBtn');
+      if (submitBtn) submitBtn.addEventListener('click', () => {
+        for (let i = 0; i < quizQuestions.length; i++) {
+          const selected = document.querySelector(`input[name="q${i}"]:checked`);
+          if (selected) quizAnswers[`q${i}`] = parseInt(selected.value);
         }
+        computeScoreAndShow();
+      });
+    }
+    if (quizSubmitted) {
+      const resetBtn = document.getElementById('resetQuizBtn');
+      if (resetBtn) resetBtn.addEventListener('click', () => {
+        quizAnswers = {}; quizSubmitted = false; quizStarted = false; quizStartTime = null; quizEndTime = null; quizScore = 0;
+        if (accuracyChart) accuracyChart.destroy();
+        if (quizTimerInterval) clearInterval(quizTimerInterval);
+        renderCurrentSection(); attachQuizEvents();
+      });
+    }
+  }
 
-        function calculateRank() {
-            const container = document.getElementById('steps-container');
-            container.innerHTML = '';
-            let A = getMatrixData();
-            let rows = A.length;
-            let cols = A[0].length;
-            
-            addStep("STEP 1: Original Matrix", "Initial state of the input matrix.", A, -1, -1);
+  function handleQuizChange(e) { quizAnswers[e.target.name] = parseInt(e.target.value); }
 
-            let rank = 0;
-            let currentMatrix = JSON.parse(JSON.stringify(A));
+  // Tutorial
+  function renderTutorial() {
+    return `<div class="page-header"><h1><i class="fas fa-chalkboard-teacher"></i> Tutorial: How Row Echelon Form & Rank Work</h1></div>
+    <div class="section-card">
+      <div class="section-title"><i class="fas fa-graduation-cap"></i> Step-by-Step Concept</div>
+      <div class="tutorial-step"><h3><i class="fas fa-1-circle" style="color:#FFB347;"></i> 1. What is Rank?</h3><p>The rank of a matrix is the maximum number of linearly independent rows (or columns). It tells us the dimension of the vector space spanned by its rows. In practical terms, it reveals how many rows carry unique information.</p><div class="highlight"><i class="fas fa-lightbulb"></i> Key idea: Rank = number of non-zero rows after Gaussian elimination (row echelon form).</div></div>
+      <div class="tutorial-step"><h3><i class="fas fa-2-circle" style="color:#FFB347;"></i> 2. Elementary Row Operations</h3><p>We use three valid row operations that preserve rank: <strong>Swap</strong> two rows, <strong>Multiply</strong> a row by a non-zero scalar, and <strong>Add</strong> a multiple of one row to another. These help create zeros below pivots.</p><div class="demo-matrix">Example: R₂ → R₂ - 2R₁ creates a zero in first column.</div></div>
+      <div class="tutorial-step"><h3><i class="fas fa-3-circle" style="color:#FFB347;"></i> 3. Forming Row Echelon Form (REF)</h3><p>REF requires: (a) All zero rows at bottom, (b) Leading entry (pivot) in each row is strictly to the right of pivot above, (c) All entries below pivot are zero. Our algorithm automatically does this using Gaussian elimination.</p><div class="demo-matrix">⎡ 1  2  3 ⎤<br>⎢ 0  1  4 ⎥  →  two pivots ⇒ rank = 2<br>⎣ 0  0  0 ⎦</div></div>
+      <div class="tutorial-step"><h3><i class="fas fa-4-circle" style="color:#FFB347;"></i> 4. How the Virtual Lab works</h3><p>You input any matrix (max 5x5). The solver performs sequential row operations, showing each transformation. At the end, non-zero rows count = rank. The step-by-step display enhances understanding of pivot positions.</p><p><strong>Pro tip:</strong> Try a singular matrix (determinant zero) and see rank less than full dimension!</p></div>
+      <div class="tutorial-step"><h3><i class="fas fa-5-circle" style="color:#FFB347;"></i> 5. Why Rank matters?</h3><p>Rank determines solution existence (Consistency of Ax=b), dimensionality reduction (PCA, SVD), controllability in robotics, and even image compression. Mastering rank builds a strong foundation for advanced engineering maths.</p></div>
+    </div>`;
+  }
 
-            for (let j = 0; j < cols && rank < rows; j++) {
-                // Find pivot
-                let pivot = rank;
-                while (pivot < rows && Math.abs(currentMatrix[pivot][j]) < 1e-9) pivot++;
+  // Virtual Lab
+  function renderVirtualLab() {
+    const hintStatusText = showStepsHint ? "Hide Solution" : "Hint: Show Solution";
+    return `<div class="page-header"><h1>Virtual Lab : Rank Evaluator</h1><div class="sub">Gaussian Elimination → Row Echelon Form → Rank</div></div>
+      <div class="section-card">
+        <div class="section-title"><i class="fas fa-border-all"></i> Matrix Dimensions</div>
+        <div class="matrix-dim-panel">
+          <div class="dim-control"><label>Rows (max 5)</label><input type="number" id="rowsInput" min="1" max="5" value="${matrixRows}"></div>
+          <div class="dim-control"><label>Columns (max 5)</label><input type="number" id="colsInput" min="1" max="5" value="${matrixCols}"></div>
+          <button id="resizeMatrixBtn"><i class="fas fa-sync-alt"></i> Resize Grid</button>
+        </div>
+        <div id="matrixInputArea">${generateMatrixInputGrid(matrixRows, matrixCols)}</div>
+        <div class="rank-prediction-panel">
+          <label><strong><i class="fas fa-brain"></i> Predict Rank Before Solving:</strong></label>
+          <input type="number" id="userPredictedRank" placeholder="Enter your guess (0 to ${Math.min(matrixRows, matrixCols)})" style="width:120px; padding:8px; border-radius:20px; margin:0 12px;">
+          <button id="verifyPredictionBtn"><i class="fas fa-check-double"></i> Verify My Guess</button>
+          <div id="predictionFeedback" style="margin-top:12px;"></div>
+          <div style="font-size:0.85rem; color:#6c757d; margin-top:8px;"><i class="fas fa-info-circle"></i> Note: Verify only tells if your guess is correct. Click "Calculate Rank" to see the actual answer, and "Hint" to view steps.</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px;">
+          <button id="calculateRankBtn" class="calc-btn"><i class="fas fa-chart-simple"></i> Calculate Rank (Step-by-Step)</button>
+          <button id="toggleHintBtn" class="hint-toggle"><i class="fas fa-lightbulb"></i> ${hintStatusText}</button>
+        </div>
+        <div id="rankResultArea"></div>
+        <div id="stepsVisualization" class="steps-container"><p style="color:#6c757d;"><i class="fas fa-info-circle"></i> Enter matrix, click calculate. Use hint to reveal/hide solution.</p></div>
+        <div class="footer-credit" style="margin-top: 30px;"><i class="fas fa-code-branch"></i> Developed by: <strong>PARESH THORAT</strong> & <strong>BALAJI DAMKONDWAR</strong> | Guided by: <strong>Mr. Dinesh Kute Sir</strong> | PCCOE Virtual Lab Initiative</div>
+      </div>`;
+  }
 
-                if (pivot === rows) {
-                    addStep(`Column ${j+1}`, `No non-zero pivot found in Column ${j+1}. Moving to next column.`, currentMatrix, -1, j);
-                    continue;
-                }
+  function attachLabEvents() {
+    const rowsInput = document.getElementById('rowsInput'), colsInput = document.getElementById('colsInput');
+    document.getElementById('resizeMatrixBtn')?.addEventListener('click', () => { matrixRows = Math.min(5, Math.max(1, parseInt(rowsInput.value) || 2)); matrixCols = Math.min(5, Math.max(1, parseInt(colsInput.value) || 2)); document.getElementById('matrixInputArea').innerHTML = generateMatrixInputGrid(matrixRows, matrixCols); document.getElementById('stepsVisualization').innerHTML = ''; document.getElementById('rankResultArea').innerHTML = ''; document.getElementById('predictionFeedback').innerHTML = ''; lastComputedSteps = null; lastRank = null; });
+    document.getElementById('calculateRankBtn')?.addEventListener('click', () => { const mat = readMatrixFromUI(matrixRows, matrixCols); const { steps, rank } = gaussianEliminationWithSteps(mat); lastComputedSteps = steps; lastRank = rank; updateStepsVisibilityLab(); });
+    document.getElementById('verifyPredictionBtn')?.addEventListener('click', () => { if (lastRank === null) { document.getElementById('predictionFeedback').innerHTML = '<div class="prediction-feedback" style="background:#ffe0b3;">First calculate rank using button above.</div>'; return; } const predicted = parseInt(document.getElementById('userPredictedRank').value); if (isNaN(predicted)) { document.getElementById('predictionFeedback').innerHTML = '<div style="background:#f8d7da; color:#721c24;">Enter a number.</div>'; return; } if (predicted === lastRank) document.getElementById('predictionFeedback').innerHTML = '<div style="background:#d4edda; color:#155724;">✅ Correct! Well done!</div>'; else document.getElementById('predictionFeedback').innerHTML = `<div style="background:#f8d7da; color:#721c24;">❌ Wrong. Click "Calculate Rank" to see answer.</div>`; });
+    const toggleHint = document.getElementById('toggleHintBtn');
+    if (toggleHint) toggleHint.addEventListener('click', () => { showStepsHint = !showStepsHint; toggleHint.innerHTML = showStepsHint ? "Hide Solution" : "Hint: Show Solution"; updateStepsVisibilityLab(); });
+  }
+  function updateStepsVisibilityLab() {
+    const stepsContainer = document.getElementById('stepsVisualization'), resultArea = document.getElementById('rankResultArea');
+    if (resultArea && lastRank !== null) resultArea.innerHTML = `<div style="padding:15px; background:#e8f5e9; border-radius:20px;">🎯 Rank = ${lastRank}</div>`;
+    if (lastComputedSteps && showStepsHint) stepsContainer.innerHTML = renderSolutionSteps(lastComputedSteps, lastRank);
+    else if (lastComputedSteps) stepsContainer.innerHTML = `<div style="text-align:center;"><i class="fas fa-user-graduate"></i><h3>Manual Mode</h3><p>Click Hint to see steps.</p></div>`;
+  }
 
-                // Swap rows if needed
-                if (pivot !== rank) {
-                    [currentMatrix[pivot], currentMatrix[rank]] = [currentMatrix[rank], currentMatrix[pivot]];
-                    addStep(`STEP: Pivot Swapping`, `Swapping Row ${rank+1} with Row ${pivot+1} to bring pivot to diagonal.`, currentMatrix, rank, j);
-                }
+  // Applications with FULL original detailed content
+  const applicationsDB = {
+    "image": { title: "Image Processing & Compression", icon: "fas fa-image", detail: "Matrix rank plays a vital role in image compression using Singular Value Decomposition (SVD). A grayscale image is represented as a matrix where each entry is a pixel intensity. Using SVD (A = UΣVᵀ), we can approximate the image using only the top 'k' singular values, where 'k' is the rank of the approximation. Low-rank approximation discards insignificant singular values (noise), reducing storage space by 80-90% while preserving essential features like edges and shapes.", extended: `<ul style="margin-top: 12px; margin-left: 20px;"><li><strong>🔬 Deep Dive:</strong> If an image matrix A has rank r, we can write A ≈ A_k = U_k Σ_k V_kᵀ, where k < r. This is the foundation of JPEG 2000 compression.</li><li><strong>📊 Real-world example:</strong> A 1024×1024 satellite image (1 million pixels) with rank 50 can be stored using only 1024×50 + 50 + 50×1024 ≈ 102,500 numbers — over 90% compression!</li><li><strong>🧠 Learning insight:</strong> The lower the rank, the more compressible the image. Smooth images have low rank; textured/noisy images have high rank.</li><li><strong>⚙️ Applications:</strong> Facial recognition (Eigenfaces), MRI reconstruction, video streaming, document scanning.</li></ul>` },
+    "control": { title: "Control Theory & Robotics", icon: "fas fa-robot", detail: "In state-space control systems, the rank of the controllability matrix (C = [B AB A²B ... Aⁿ⁻¹B]) determines whether a system can be driven from any initial state to any desired final state using control inputs. Similarly, the observability matrix rank determines if internal states can be inferred from output measurements.", extended: `<ul style="margin-top: 12px; margin-left: 20px;"><li><strong>🔬 Deep Dive:</strong> A linear system is <strong>controllable</strong> if rank(C) = n (system order). It is <strong>observable</strong> if rank(O) = n, where O = [C CA CA² ... CAⁿ⁻¹]ᵀ.</li><li><strong>📊 Real-world example:</strong> For an autonomous car, the controllability rank ensures steering and throttle can guide the car to any position; observability rank ensures sensors (cameras, LIDAR) can estimate the car's true state.</li><li><strong>🧠 Learning insight:</strong> Rank deficiency in controllability means some 'modes' of the system cannot be influenced — a critical safety issue in drones, rockets, and industrial robots.</li><li><strong>⚙️ Applications:</strong> Pole placement design, Kalman filters, autopilot systems, chemical process control.</li></ul>` },
+    "equations": { title: "System of Linear Equations", icon: "fas fa-chart-line", detail: "The Rouché–Capelli theorem states: A system Ax = b has solutions if and only if rank(A) = rank([A|b]). If rank(A) = rank([A|b]) = number of variables → unique solution. If rank(A) = rank([A|b]) < variables → infinitely many solutions. If ranks differ → no solution (inconsistent system).", extended: `<ul style="margin-top: 12px; margin-left: 20px;"><li><strong>🔬 Deep Dive:</strong> The nullity (dimension of null space) = n - rank(A). This tells how many free variables exist in the solution.</li><li><strong>📊 Real-world example:</strong> In electrical circuit analysis (Kirchhoff's laws), you get 10 equations in 10 unknowns. If rank(A) = 9, then infinite solutions exist — meaning the circuit has a redundancy (e.g., a loop with no voltage source).</li><li><strong>🧠 Learning insight:</strong> Rank reveals whether your equations are independent or if some are just linear combinations of others (redundant information).</li><li><strong>⚙️ Applications:</strong> Structural engineering (force equilibrium), economic input-output models, network flow optimization, machine learning regression.</li></ul>` },
+    "pca": { title: "Principal Component Analysis (PCA) & Data Science", icon: "fas fa-chart-scatter", detail: "PCA transforms data to a new coordinate system where the greatest variance lies on the first principal component. The rank of the covariance matrix reveals the intrinsic dimensionality of the dataset. By projecting onto the top-k eigenvectors (where k equals the effective rank), we reduce dimensions while preserving 95%+ of information.", extended: `<ul style="margin-top: 12px; margin-left: 20px;"><li><strong>🔬 Deep Dive:</strong> If data matrix X (m samples × n features) has rank r, then the covariance matrix XᵀX also has rank r. PCA keeps the eigenvectors corresponding to the largest r' singular values (r' ≤ r).</li><li><strong>📊 Real-world example:</strong> In face recognition (Eigenfaces), a 1024-pixel face can be represented by just 50-100 principal components — reducing dimensions by 90% while maintaining 95% recognition accuracy.</li><li><strong>🧠 Learning insight:</strong> The 'elbow' in the scree plot (plot of singular values) shows the effective rank — where additional components add little new variance.</li><li><strong>⚙️ Applications:</strong> Genetics (finding gene expression patterns), finance (portfolio risk factors), recommendation systems (Netflix, Amazon), anomaly detection.</li></ul>` }
+  };
+  function renderApplicationsList() { return `<div class="page-header"><h1>Real-World Applications</h1></div><div class="section-card"><div class="section-title"><i class="fas fa-microchip"></i> Applied Mathematics</div><div class="app-card-grid">${Object.entries(applicationsDB).map(([k,v]) => `<div class="app-card" data-app="${k}"><i class="${v.icon}"></i><h3>${v.title}</h3><p>Click to explore</p></div>`).join('')}</div></div>`; }
+  function renderApplicationDetail(appId) { const app = applicationsDB[appId]; return `<div class="page-header"><h1><i class="${app.icon}"></i> ${app.title}</h1></div><div class="section-card"><button id="backToAppsBtn" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Applications</button><div style="margin-top:24px;"><p style="font-size:1rem; line-height:1.6;">${app.detail}</p>${app.extended || ''}<div class="hint-box" style="margin-top:28px; background:#eef2ff; padding:16px; border-radius:20px;"><i class="fas fa-graduation-cap"></i> <strong>PCCOE Learning Outcome:</strong> Understanding rank helps bridge pure linear algebra with practical engineering — a core principle of our curriculum.</div></div></div>`; }
+  function bindApplicationCards() { document.querySelectorAll('.app-card').forEach(c => c.addEventListener('click', () => { currentSubview = 'detail'; selectedApp = c.getAttribute('data-app'); renderCurrentSection(); })); const back = document.getElementById('backToAppsBtn'); if(back) back.addEventListener('click', () => { currentSubview = 'list'; renderCurrentSection(); }); }
+  
+  function renderFeedback() { return `<div class="page-header"><h1><i class="fas fa-comment-dots"></i> Student Feedback</h1><div>Please share your experience. (College ID: @pccoepune.org)</div></div>
+    <div class="section-card feedback-form-container"><form id="feedbackFormElem"><div class="form-group"><label>Full Name</label><input id="fbName" required></div><div class="form-group"><label>College Email (@pccoepune.org)</label><input id="fbEmail" pattern=".*@pccoepune\\.org$" required></div><div class="form-group"><label>Rating</label><div class="rating-stars" id="starRatingWidget">${[1,2,3,4,5].map(i => `<i class="far fa-star star-btn" data-val="${i}"></i>`).join('')}</div><input type="hidden" id="fbRating" value="0"></div><div class="form-group"><label>Feedback / Issue</label><textarea id="fbMsg" rows="4"></textarea></div><button type="submit"><i class="fas fa-paper-plane"></i> Submit Feedback</button><div id="feedbackStatusMsg"></div></form></div>`; }
+  function attachFeedbackEvents() { 
+    const stars = document.querySelectorAll('.star-btn'), ratingInput = document.getElementById('fbRating');
+    stars.forEach(s => s.addEventListener('click', () => { const val = parseInt(s.dataset.val); ratingInput.value = val; stars.forEach((st, idx) => { if (idx < val) st.className = 'fas fa-star star-btn active-star'; else st.className = 'far fa-star star-btn'; }); }));
+    document.getElementById('feedbackFormElem')?.addEventListener('submit', (e) => { e.preventDefault(); const email = document.getElementById('fbEmail').value.trim(); if(!email.endsWith('@pccoepune.org')) { document.getElementById('feedbackStatusMsg').innerHTML = '<span style="color:#c7254e;">Email must be @pccoepune.org</span>'; return; } document.getElementById('feedbackStatusMsg').innerHTML = '<span style="color:#2b7e3a;">Thank you for feedback!</span>'; e.target.reset(); ratingInput.value = "0"; stars.forEach(s => s.className = 'far fa-star star-btn'); });
+  }
 
-                // Eliminate below
-                addStep(`STEP: Pivot Selection`, `Selected ${currentMatrix[rank][j]} as pivot for Column ${j+1}`, currentMatrix, rank, j);
+  function renderCredits() {
+    return `<div class="page-header"><h1><i class="fas fa-trophy"></i> Credits & Acknowledgements</h1></div>
+    <div class="section-card">
+      <div class="section-title"><i class="fas fa-code-branch"></i> Development Team</div>
+      <p style="font-size:1.2rem; margin:20px 0;"><strong>PARESH THORAT</strong> & <strong>BALAJI DAMKONDWAR</strong></p>
+      <p><i class="fas fa-chalkboard-user"></i> <strong>Guided by:</strong> Mr. Dinesh Kute Sir</p>
+      <p><i class="fas fa-university"></i> <strong>Department of Applied Science & Humanity</strong>, Pimpri Chinchwad College of Engineering (PCCOE), Pune</p>
+      <div style="margin-top:30px; padding:20px; background:#eef2ff; border-radius:24px;">
+        <i class="fas fa-heart" style="color:#FFB347;"></i> Special thanks to PCCOE management for supporting virtual lab initiatives.
+      </div>
+      <div class="footer-credit" style="margin-top:30px;">© 2025 PCCOE Virtual Lab | Engineering Mathematics Portal</div>
+    </div>`;
+  }
 
-                for (let i = rank + 1; i < rows; i++) {
-                    let factor = currentMatrix[i][j] / currentMatrix[rank][j];
-                    if (Math.abs(factor) > 1e-9) {
-                        for (let k = j; k < cols; k++) {
-                            currentMatrix[i][k] -= factor * currentMatrix[rank][k];
-                        }
-                        addStep(`Elimination`, `R${i+1} = R${i+1} - (${factor.toFixed(2)}) * R${rank+1}`, currentMatrix, rank, j);
-                    }
-                }
-                rank++;
-            }
+  // AIM with original detailed content
+  function renderAim() {
+    return `<div class="page-header"><h1>PCCOE Pune</h1></div>
+    <div class="section-card">
+      <div class="section-title"><i class="fas fa-crosshairs"></i> Aim</div>
+      <p style="font-size:1.1rem;">The primary objective of this experiment is to systematically determine the <b>Rank of a Matrix</b> by performing elementary row transformations to reduce it to its <b>Row Echelon Form</b>. This virtual simulation provides a rigorous platform for analyzing linear independence among row vectors, identifying pivot elements, and calculating the final rank based on the number of non-zero rows. By mastering this process, students develop the foundational skills required to evaluate the consistency of linear systems (AX = B) and understand the dimensionality of vector spaces in complex engineering problems.</p>
+    </div>`;
+  }
 
-            // Final count
-            let finalRank = 0;
-            for(let i=0; i<rows; i++) {
-                if(currentMatrix[i].some(val => Math.abs(val) > 1e-9)) finalRank++;
-            }
+  function renderCurrentSection() {
+    if (currentSection === 'aim') mainContainer.innerHTML = renderAim();
+    else if (currentSection === 'tutorial') mainContainer.innerHTML = renderTutorial();
+    else if (currentSection === 'pre-test') { mainContainer.innerHTML = renderPreTest(); attachPreTestEvents(); if(preTestSubmitted) drawPreTestChart(); }
+    else if (currentSection === 'virtual-lab') { mainContainer.innerHTML = renderVirtualLab(); attachLabEvents(); if(lastComputedSteps) setTimeout(() => updateStepsVisibilityLab(), 20); }
+    else if (currentSection === 'applications') { if (currentSubview === 'detail' && selectedApp) mainContainer.innerHTML = renderApplicationDetail(selectedApp); else { currentSubview = 'list'; mainContainer.innerHTML = renderApplicationsList(); } bindApplicationCards(); }
+    else if (currentSection === 'quiz') { mainContainer.innerHTML = renderQuiz(); attachQuizEvents(); if(quizSubmitted) drawAccuracyChart(); }
+    else if (currentSection === 'feedback') { mainContainer.innerHTML = renderFeedback(); attachFeedbackEvents(); }
+    else if (currentSection === 'credits') mainContainer.innerHTML = renderCredits();
+    document.querySelectorAll('.nav-btn').forEach(btn => { const s = btn.getAttribute('data-section'); if(s === currentSection) btn.classList.add('active'); else btn.classList.remove('active'); });
+  }
 
-            addStep("FINAL STEP: Row Echelon Form Achieved", "All entries below pivots are zeroed.", currentMatrix, -1, -1);
-            document.getElementById('final-result').style.display = 'block';
-            document.getElementById('rank-value').innerText = finalRank;
+  function bindNavigation() {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const section = btn.getAttribute('data-section');
+        if (['aim','tutorial','pre-test','virtual-lab','applications','quiz','feedback','credits'].includes(section)) {
+          currentSection = section;
+          if (section !== 'applications') { currentSubview = null; selectedApp = null; }
+          else if (!currentSubview) currentSubview = 'list';
+          renderCurrentSection();
         }
-
-        function loadExample(type) {
-            createMatrixInput();
-            const inputs = document.querySelectorAll('.matrix-cell');
-            let vals = [];
-            if(type === 1) vals = [1, 2, 3, 2, 4, 6, 0, 1, 1]; // Rank 2
-            else vals = [1, 0, 2, 0, 1, 3, 1, 1, 0]; // Rank 3
-            
-            inputs.forEach((input, i) => { if(vals[i] !== undefined) input.value = vals[i]; });
-        }
-
-        // --- Graphics Demo ---
-        const canvas = document.getElementById('rotationCanvas');
-        const ctx = canvas.getContext('2d');
-        function drawRotation(angle) {
-            const rad = angle * Math.PI / 180;
-            ctx.clearRect(0,0,400,300);
-            // Draw Axis
-            ctx.strokeStyle = '#ddd';
-            ctx.beginPath(); ctx.moveTo(200,0); ctx.lineTo(200,300); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0,150); ctx.lineTo(400,150); ctx.stroke();
-            
-            // Vector
-            const x = 80, y = 0;
-            const rx = x * Math.cos(rad) - y * Math.sin(rad);
-            const ry = x * Math.sin(rad) + y * Math.cos(rad);
-            
-            ctx.strokeStyle = 'var(--pccoe-blue)';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(200, 150);
-            ctx.lineTo(200 + rx, 150 - ry);
-            ctx.stroke();
-            
-            ctx.fillStyle = 'red';
-            ctx.beginPath(); ctx.arc(200+rx, 150-ry, 5, 0, Math.PI*2); ctx.fill();
-        }
-        document.getElementById('angleSlider').oninput = function() {
-            document.getElementById('angleText').innerText = this.value;
-            drawRotation(this.value);
-        }
-
-        // --- Quiz System ---
-        const questions = [
-            { q: "What is the rank of an Identity Matrix of size n?", a: ["n-1", "n", "1", "0"], c: 1 },
-            { q: "If the determinant of a 3x3 matrix is 0, the rank CANNOT be:", a: ["0", "1", "2", "3"], c: 3 },
-            { q: "Rank(A) is equal to:", a: ["Rank of A Transpose", "Number of columns", "Determinant", "Trace"], c: 0 },
-            { q: "A 4x4 matrix has 2 rows that are multiples of each other. Max rank is:", a: ["4", "3", "2", "1"], c: 1 },
-            { q: "The rank of a Zero Matrix is:", a: ["Undefined", "1", "Infinity", "0"], c: 3 },
-            { q: "Which operation does NOT change the rank?", a: ["Row Swap", "Multiplying row by non-zero", "Adding row to another", "All of these"], c: 3 },
-            { q: "Matrix A is 3x4. Maximum possible rank is:", a: ["3", "4", "7", "12"], c: 0 },
-            { q: "If Rank(A) = Number of Rows, the matrix is:", a: ["Singular", "Full Row Rank", "Identity", "Zero"], c: 1 },
-            { q: "Elementary row operations transform a matrix into:", a: ["Echelon form", "Inverse", "Square", "Diagonal"], c: 0 },
-            { q: "Rank of a matrix represents number of linearly ____ rows.", a: ["Dependent", "Independent", "Equal", "Zero"], c: 1 }
-        ];
-
-        let currentQ = 0;
-        let score = 0;
-
-        function loadQuiz() {
-            const container = document.getElementById('quiz-content');
-            const q = questions[currentQ];
-            let html = `<h3>Question ${currentQ+1} of 10</h3><p>${q.q}</p>`;
-            q.a.forEach((opt, i) => {
-                html += `<label class="quiz-option"><input type="radio" name="q" value="${i}"> ${opt}</label>`;
-            });
-            container.innerHTML = html;
-            document.getElementById('progress').style.width = `${(currentQ/10)*100}%`;
-        }
-
-        function handleNextQuestion() {
-            const selected = document.querySelector('input[name="q"]:checked');
-            if(!selected) { alert("Please select an answer!"); return; }
-            
-            if(parseInt(selected.value) === questions[currentQ].c) score++;
-            
-            currentQ++;
-            if(currentQ < questions.length) {
-                loadQuiz();
-            } else {
-                document.getElementById('quiz-content').innerHTML = `
-                    <div style="text-align:center">
-                        <h3>Quiz Complete!</h3>
-                        <p style="font-size:2rem">Score: ${score}/10</p>
-                        <button class="btn btn-primary" onclick="location.reload()">Restart Lab</button>
-                    </div>`;
-                document.getElementById('next-btn').style.display = 'none';
-                localStorage.setItem('pccoe_rank_score', score);
-            }
-        }
-
-        // Timer
-        let timeLeft = 600;
-        setInterval(() => {
-            if(timeLeft <= 0) return;
-            timeLeft--;
-            const m = Math.floor(timeLeft/60);
-            const s = timeLeft%60;
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-        }, 1000);
-
-        // Init
-        window.onload = () => {
-            createMatrixInput();
-            drawRotation(0);
-            loadQuiz();
-        };
-    </script>
+      });
+    });
+  }
+  function init() { bindNavigation(); renderCurrentSection(); }
+  init();
+</script>
 </body>
 </html>
